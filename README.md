@@ -38,7 +38,7 @@ Load tested with [Artillery](https://artillery.io) on a MacBook Air (M1, 8GB RAM
 - ❌ 0 failures
 - 🔁 Session length: ~5s per user
 
-![Benchmark Chart](./benchmarks/artillery_performance_chart.png)
+![Benchmark Chart](./benchmark/artillery_performance_chart.png)
 
 ---
 
