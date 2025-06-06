@@ -1,0 +1,27 @@
+config:
+  target: "ws://localhost:5001"
+  phases:
+    - duration: 30       # Run for 30 seconds
+      arrivalRate: 20    # 20 clients per second
+  defaults:
+    headers:
+      Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NDM0ZDRjOTNkNWY1ZGYyNGE1YTM4NCIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ5MjQxMTcwLCJleHAiOjE3NDkyNDIwNzB9.MosWeLUtWVchoBWSlE5t9q9zh8lwAPGP67YjVBgPJVw"
+scenarios:
+  - engine: "ws"
+    flow:
+      - send:
+          text: >
+            {
+              "type": "joinOffice",
+              "officeCode": "lobby-test",
+              "username": "Bot-{{ $uuid }}"
+            }
+      - think: 2
+      - send:
+          text: >
+            {
+              "type": "playerMovement",
+              "x": {{ randomInt(100, 600) }},
+              "y": {{ randomInt(100, 600) }}
+            }
+      - think: 3

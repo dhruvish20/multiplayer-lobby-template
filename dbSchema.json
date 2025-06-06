@@ -1,0 +1,58 @@
+{
+    "modelName": "OfficeSimulator",
+    "collections": [
+        {
+            "collectionName": "offices",
+            "type": "object",
+            "properties": [
+                { "name": "_id", "type": "objectId" },
+                { "name": "host_id", "type": "objectId" },
+                { "name": "office_code", "type": "string" },
+                { "name": "created_at", "type": "date" }
+            ]
+        },
+        {
+            "collectionName": "users",
+            "type": "object",
+            "properties": [
+                { "name": "_id", "type": "objectId" },
+                { "name": "username", "type": "string" },
+                { "name": "office_id", "type": "objectId" },
+                { "name": "current_room_id", "type": "objectId" },
+                { "name": "documents", "type": "array", "items": { "type": "objectId" } }
+            ]
+        },
+        {
+            "collectionName": "rooms",
+            "type": "object",
+            "properties": [
+                { "name": "_id", "type": "objectId" },
+                { "name": "office_id", "type": "objectId" },
+                { "name": "room_name", "type": "string" },
+                { "name": "capacity", "type": "number" },
+                { "name": "dynamic_capacity", "type": "boolean" }
+            ]
+        },
+        {
+            "collectionName": "documents",
+            "type": "object",
+            "properties": [
+                { "name": "_id", "type": "objectId" },
+                { "name": "owner_id", "type": "objectId" },
+                { "name": "room_id", "type": "objectId" },
+                { "name": "document_type", "type": "string" },
+                { "name": "file_url", "type": "string" }
+            ]
+        },
+        {
+            "collectionName": "chats",
+            "type": "object",
+            "properties": [
+                { "name": "_id", "type": "objectId" },
+                { "name": "room_id", "type": "objectId" },
+                { "name": "participants", "type": "array", "items": { "type": "objectId" } },
+                { "name": "messages", "type": "array", "items": { "type": "object" } }
+            ]
+        }
+    ]
+}
