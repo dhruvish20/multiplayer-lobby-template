@@ -42,13 +42,3 @@ Load tested with [Artillery](https://artillery.io) on a MacBook Air (M1, 8GB RAM
 
 ---
 
-## 📁 Folder Structure
-
-```bash
-client/       # React + Phaser frontend
-backend/      # Express API + WebSocket server
-game/         # Phaser game scene logic
-routes/       # Auth and game routes
-models/       # Mongoose schemas
-middleware/   # Auth middleware
-benchmarks/   # Load test JSON + graph
