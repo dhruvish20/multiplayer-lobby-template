@@ -1,4 +1,4 @@
-# 🧩 Multiplayer Lobby Template (Phaser + WebSocket + JWT)
+# 🧩 # 🎮 LobbyBase — Real-Time Multiplayer Starter Kit
 
 A scalable real-time multiplayer **lobby system template** — built with **React**, **Phaser**, **Node.js**, **WebSockets**, and **JWT Auth**.
 
