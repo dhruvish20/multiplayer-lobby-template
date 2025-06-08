@@ -4,24 +4,24 @@ import axios from "axios";
 import React from "react";
 
 const RegisterPage = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState(""); // changed from email
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); // Reset error message
+    setError("");
 
     try {
       const response = await axios.post("http://localhost:5001/auth/register", {
-        email,
+        username,
         password,
       });
 
       if (response.status === 201) {
         alert("Registration successful! Please log in.");
-        navigate("/"); // Redirect to login page
+        navigate("/");
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Registration failed.");
@@ -32,12 +32,20 @@ const RegisterPage = () => {
     <div style={{ padding: "2rem", textAlign: "center" }}>
       <h2>Register</h2>
       {error && <p style={{ color: "red" }}>{error}</p>}
-      <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
+      <form
+        onSubmit={handleRegister}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          alignItems: "center",
+        }}
+      >
         <input
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          placeholder="Enter your username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           required
           style={{ padding: "0.5rem", width: "250px" }}
         />
@@ -49,10 +57,13 @@ const RegisterPage = () => {
           required
           style={{ padding: "0.5rem", width: "250px" }}
         />
-        <button type="submit" style={{ padding: "0.5rem 1rem" }}>Register</button>
+        <button type="submit" style={{ padding: "0.5rem 1rem" }}>
+          Register
+        </button>
       </form>
       <p>
-        Already have an account? <button onClick={() => navigate("/")}>Login</button>
+        Already have an account?{" "}
+        <button onClick={() => navigate("/")}>Login</button>
       </p>
     </div>
   );

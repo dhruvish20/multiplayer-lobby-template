@@ -21,114 +21,115 @@ app.use(cookieParser());
 app.use("/auth", authRoutes);
 app.use("/office", officeRoutes);
 app.use(errorHandler);
+
 const PORT = process.env.PORT || 5001;
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// Create a WebSocket server
+// -- Custom Type for WebSocket with metadata --
+interface CustomWebSocket extends WebSocket {
+  clientId?: string;
+  officeCode?: string;
+}
+
+// -- WebSocket Server --
 const wss = new Server({ server });
 
-const players: Record<string, Record<string, { id: string; username: string; position: { x: number; y: number } }>> = {};
+// -- In-memory player store --
+const players: Record<string, Record<string, {
+  id: string;
+  username: string;
+  position: { x: number; y: number };
+}>> = {};
 
-wss.on("connection", (ws) => {
+wss.on("connection", (socket) => {
+  const ws = socket as CustomWebSocket;
   const clientId = uuidv4();
-  let officeCode: string | null = null;
+  ws.clientId = clientId;
+
   let username: string | null = null;
 
   ws.on("message", (data) => {
     try {
       const message = JSON.parse(data.toString());
-      console.log("Received:", message);
 
       switch (message.type) {
-        case "joinOffice":
-          officeCode = message.officeCode;
+        case "joinOffice": {
+          const officeCode = message.officeCode;
           username = message.username;
+          ws.officeCode = officeCode;
 
-          if (!players[officeCode!]) {
-            players[officeCode!] = {};
-          }
+          if (!players[officeCode]) players[officeCode] = {};
 
-          if (username) {
-            players[officeCode!][clientId] = { id: clientId, username, position: { x: 450, y: 400 } }; // Initial position
-          }
+          players[officeCode][clientId] = {
+            id: clientId,
+            username: username || "Unknown",
+            position: { x: 450, y: 400 },
+          };
 
-          // Send assigned ID to the client
           ws.send(JSON.stringify({ type: "assignId", id: clientId }));
 
-          // Send existing players to the new player, including their positions
-          const existingPlayers = Object.values(players[officeCode!]).map(player => ({
-            id: player.id,
-            username: player.username,
-            position: player.position,
-          }));
-          ws.send(
+          const existingPlayers = Object.values(players[officeCode]);
+          ws.send(JSON.stringify({ type: "existingPlayers", players: existingPlayers }));
+
+          broadcastToOffice(
+            officeCode,
             JSON.stringify({
-              type: "existingPlayers",
-              players: existingPlayers,
+              type: "newPlayer",
+              id: clientId,
+              username,
+              position: { x: 450, y: 400 },
             })
           );
-
-          // Notify others in the office about the new player
-          broadcastToOffice(
-            officeCode!,
-            JSON.stringify({ type: "newPlayer", id: clientId, username, position: { x: 450, y: 400 } }),
-            ws
-          );
-
-          console.log(`Player ${username} joined office ${officeCode}`);
           break;
+        }
 
-          case "chatMessage":
-          if (officeCode && message.chatMessage) {
-            // Broadcast the chat message to all players in the office
+        case "chatMessage": {
+          if (ws.officeCode && message.chatMessage) {
             broadcastToOffice(
-              officeCode,
+              ws.officeCode,
               JSON.stringify({
                 type: "chatMessage",
-                chatMessage: message.chatMessage, // { sender, message }
-              }),
-              ws
+                chatMessage: message.chatMessage,
+              })
             );
           }
           break;
+        }
 
-          case "playerMovement":
-            if (officeCode) {
-              // Update the player's position on the server
-              players[officeCode][clientId].position.x = message.x;
-              players[officeCode][clientId].position.y = message.y;
-              
-              // Broadcast the new position to all clients in the office
-              broadcastToOffice(
-                officeCode,
-                JSON.stringify({
-                  type: "playerMovement",
-                  id: clientId,
-                  x: message.x,
-                  y: message.y,
-                }),
-                ws
-              );
-            }
-            break;
-          
+        case "playerMovement": {
+          const officeCode = ws.officeCode;
+          if (officeCode && players[officeCode] && players[officeCode][clientId]) {
+            players[officeCode][clientId].position = { x: message.x, y: message.y };
+
+            broadcastToOffice(
+              officeCode,
+              JSON.stringify({
+                type: "playerMovement",
+                id: clientId,
+                x: message.x,
+                y: message.y,
+                username: players[officeCode][clientId].username,
+              })
+            );
+          }
+          break;
+        }
       }
-    } catch (error) {
-      console.error("Error parsing message:", error);
+    } catch (err) {
+      console.error("Error parsing message:", err);
     }
   });
 
   ws.on("close", () => {
+    const officeCode = ws.officeCode;
     if (officeCode && players[officeCode]) {
       delete players[officeCode][clientId];
 
-      // Notify others in the office that the player left
       broadcastToOffice(
         officeCode,
-        JSON.stringify({ type: "removePlayer", id: clientId }),
-        ws
+        JSON.stringify({ type: "removePlayer", id: clientId })
       );
 
       console.log(`Client ${clientId} disconnected from office ${officeCode}`);
@@ -136,11 +137,12 @@ wss.on("connection", (ws) => {
   });
 });
 
-// Helper function to broadcast messages to a specific office
-function broadcastToOffice(officeCode: string, message: string, sender: WebSocket) {
+// -- Broadcast to a specific office only --
+function broadcastToOffice(officeCode: string, message: string) {
   wss.clients.forEach((client) => {
-    if (client !== sender && client.readyState === WebSocket.OPEN) {
-      client.send(message);
+    const ws = client as CustomWebSocket;
+    if (ws.readyState === WebSocket.OPEN && ws.officeCode === officeCode) {
+      ws.send(message);
     }
   });
 }

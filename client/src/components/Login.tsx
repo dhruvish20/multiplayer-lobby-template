@@ -8,8 +8,15 @@ const Login = ({ setAuth }: { setAuth: (auth: boolean) => void }) => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5001/api/auth/login", { email, password }, { withCredentials: true });
-      setAuth(true); // Update state
+      const response = await axios.post(
+        "http://localhost:5001/api/auth/login",
+        { email, password },
+        { withCredentials: true } 
+      );
+  
+      const token = response.data.token;
+      localStorage.setItem("token", token);
+      setAuth(true);
     } catch (error) {
       console.error("Login failed", error);
     }

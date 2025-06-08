@@ -3,8 +3,8 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 export interface IOffice extends Document {
     name: string;
     code: string;
-    admin: Types.ObjectId; // User who created the office
-    users: Types.ObjectId[]; // Array of users in the office
+    admin: Types.ObjectId; 
+    users: Types.ObjectId[]; 
 }
 
 const OfficeSchema = new Schema<IOffice>({

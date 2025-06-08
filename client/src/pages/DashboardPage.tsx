@@ -5,34 +5,26 @@ import { createOfficeAPI, joinOfficeAPI } from "../services/officeService.ts";
 const DashboardPage = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem("accessToken") || "";
-  
-  // State for create office form
-  const [officeName, setOfficeName] = useState("");
+
+  const [createdOffice, setCreatedOffice] = useState<{ code: string } | null>(null);
   const [createError, setCreateError] = useState("");
-  const [createdOffice, setCreatedOffice] = useState<{ code: string; name: string } | null>(null);
-  
-  // State for join office form
+
   const [officeCode, setOfficeCode] = useState("");
   const [joinError, setJoinError] = useState("");
 
-  // Create Office
-  const handleCreateOffice = async (e: FormEvent) => {
-    e.preventDefault();
+  // Create Office with default or random name
+  const handleCreateOffice = async () => {
     setCreateError("");
     setCreatedOffice(null);
 
     try {
-      const office = await createOfficeAPI(officeName, token);
-      // Set the created office data so it can be displayed
+      const office = await createOfficeAPI("Office", token); // name hardcoded
       setCreatedOffice(office);
-      // Optionally, you could also navigate to the game directly:
-      // navigate(`/game/${office.code}`);
     } catch (error: any) {
       setCreateError(error.response?.data?.error || "Failed to create office.");
     }
   };
 
-  // Join Office
   const handleJoinOffice = async (e: FormEvent) => {
     e.preventDefault();
     setJoinError("");
@@ -48,23 +40,14 @@ const DashboardPage = () => {
   return (
     <div style={{ padding: "2rem" }}>
       <h2>Dashboard</h2>
-      
+
       <div style={{ marginTop: "2rem" }}>
         <h3>Create Office</h3>
-        <form onSubmit={handleCreateOffice} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <input
-            type="text"
-            placeholder="Office Name"
-            value={officeName}
-            onChange={(e) => setOfficeName(e.target.value)}
-            required
-            style={{ padding: "0.5rem", width: "250px" }}
-          />
-          <button type="submit" style={{ padding: "0.5rem 1rem" }}>
-            Create Office
-          </button>
-          {createError && <p style={{ color: "red" }}>{createError}</p>}
-        </form>
+        <button onClick={handleCreateOffice} style={{ padding: "0.5rem 1rem" }}>
+          Create Office
+        </button>
+        {createError && <p style={{ color: "red" }}>{createError}</p>}
+
         {createdOffice && (
           <div style={{ marginTop: "1rem" }}>
             <p>

@@ -1,13 +1,13 @@
-// src/components/CreateOffice.tsx
 import React, { useState } from "react";
-import { createOffice } from "../services/api.ts";
+import { createOfficeAPI } from "../services/officeService.ts";
 
 const CreateOffice = () => {
   const [officeName, setOfficeName] = useState("");
 
   const handleCreateOffice = async () => {
     try {
-      const response = await createOffice(officeName);
+      const token = localStorage.getItem("token") || "";
+      const response = await createOfficeAPI(officeName, token);
       alert(`Office created! Code: ${response.officeCode}`);
     } catch (error) {
       alert("Failed to create office.");

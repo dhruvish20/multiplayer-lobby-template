@@ -1,13 +1,14 @@
 // src/components/JoinOffice.tsx
 import React, { useState } from "react";
-import { joinOffice } from "../services/api.ts";
+import { joinOfficeAPI } from "../services/officeService";
 
 const JoinOffice = () => {
   const [officeCode, setOfficeCode] = useState("");
 
   const handleJoinOffice = async () => {
     try {
-      const response = await joinOffice(officeCode);
+      const token = localStorage.getItem("token") || "";
+      const response = await joinOfficeAPI(officeCode, token);
       alert(`Joined office: ${response.officeName}`);
     } catch (error) {
       alert("Failed to join office.");

@@ -4,6 +4,7 @@ import GameScene from "./scenes/GameScene.ts";
 interface GameInitData {
   officeCode: string | undefined;
   token: string;
+  username: string;
 }
 
 const createGame = (initData: GameInitData) => {
@@ -11,7 +12,7 @@ const createGame = (initData: GameInitData) => {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
-    scene: [new GameScene(initData)], // Pass officeCode and token to GameScene
+    scene: [new GameScene(initData)], 
     parent: "phaser-game",
     scale: {
       mode: Phaser.Scale.RESIZE,
