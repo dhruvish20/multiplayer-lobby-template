@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { Server, WebSocket } from "ws";
+import { createClient } from "redis";
 import connectDB from "./config/db";
 import authRoutes from "./routes/auth";
 import officeRoutes from "./routes/office";
@@ -11,6 +12,9 @@ import { v4 as uuidv4 } from "uuid";
 
 dotenv.config();
 connectDB();
+
+const redisClient = createClient();
+redisClient.connect().catch((err) => console.error("Redis connection error:", err));
 
 const app = express();
 
@@ -50,7 +54,7 @@ wss.on("connection", (socket) => {
 
   let username: string | null = null;
 
-  ws.on("message", (data) => {
+  ws.on("message", async (data) => {
     try {
       const message = JSON.parse(data.toString());
 
@@ -67,6 +71,14 @@ wss.on("connection", (socket) => {
             username: username || "Unknown",
             position: { x: 450, y: 400 },
           };
+
+          const player = {
+            id: clientId,
+            username: username || "Unknown",
+            position: { x: 450, y: 400 }
+          };        
+
+          await redisClient.set(`player:${clientId}`, JSON.stringify(player));
 
           ws.send(JSON.stringify({ type: "assignId", id: clientId }));
 
@@ -91,7 +103,8 @@ wss.on("connection", (socket) => {
               ws.officeCode,
               JSON.stringify({
                 type: "chatMessage",
-                chatMessage: message.chatMessage,
+                chatMessage: 
+                  message.chatMessage,
               })
             );
           }

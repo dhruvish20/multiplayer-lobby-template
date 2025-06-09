@@ -5,6 +5,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   private usernameText: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string, frame: string, id: string) {
+    if (!scene || !scene.sys || !scene.sys.displayList) {
+      throw new Error("Invalid scene provided to Player");
+    }
     super(scene, x, y, texture, frame);
     this.id = id;
 

@@ -26,6 +26,7 @@ export default class GameScene extends Phaser.Scene {
     this.officeCode = initData.officeCode;
     this.token = initData.token;
     this.username = initData.username;
+
   }
 
   preload() {
@@ -53,6 +54,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.sceneReady = true;
     this.initializeSocket();
+    this.bindChatEventOnce(); 
   }
 
   private createAnimations() {
@@ -86,6 +88,26 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
+  private chatListenerBound = false;
+
+  private bindChatEventOnce() {
+    if (this.chatListenerBound) return;
+    this.chatListenerBound = true;
+  
+    window.addEventListener("outgoingChatMessage", (e: any) => {
+      const msg = e.detail;
+      if (this.socket?.readyState === WebSocket.OPEN) {
+        this.socket.send(JSON.stringify({
+          type: "chatMessage",
+          chatMessage: {
+            sender: this.username, 
+            message: msg.message   
+          }
+        }));
+      }
+    });
+  }
+
   private initializeSocket() {
     if (!this.officeCode || !this.token) return;
 
@@ -113,17 +135,23 @@ export default class GameScene extends Phaser.Scene {
 
       switch (data.type) {
         case "assignId":
+        if (!this.myPlayerId) {
+          this.myPlayerId = data.id;
           if (!this.players[data.id]) {
-            this.myPlayerId = data.id;
-            this.createPlayer();
+            this.createPlayer();  // ✅ Prevent duplicate players
           }
-          break;
+        }
+        break;
 
-        case "newPlayer":
-          if (this.sceneReady && !this.players[data.id]) {
-            this.addPlayer(data.id, data.username, data.position);
-          }
-          break;
+          case "newPlayer":
+            if (!this.sys || !this.sys.isActive()) {
+              console.warn("Scene not fully active. Ignoring newPlayer.");
+              return;
+            }
+            if (this.sceneReady && !this.players[data.id]) {
+              this.addPlayer(data.id, data.username, data.position);
+            }
+            break;          
 
         case "existingPlayers":
           if (this.sceneReady) {
@@ -143,10 +171,16 @@ export default class GameScene extends Phaser.Scene {
           this.removePlayer(data.id);
           break;
 
-        case "chatMessage":
-          const chatEvent = new CustomEvent("chatMessage", { detail: data.chatMessage });
-          window.dispatchEvent(chatEvent);
-          break;
+          case "chatMessage": {
+            const { sender, message } = data.chatMessage;
+            if (typeof sender === "string" && typeof message === "string") {
+              const chatEvent = new CustomEvent("chatMessage", {
+                detail: { sender, message },
+              });
+              window.dispatchEvent(chatEvent);
+            }
+            break;
+          }
       }
     };
 
@@ -178,14 +212,19 @@ export default class GameScene extends Phaser.Scene {
 
   private addPlayer(id: string, username: string, position: { x: number; y: number }) {
     if (this.players[id]) return;
-
-    const player = new Player(this, position.x, position.y, "adam", "Adam_idle_anim_7.png", id);
-    player.setData("username", username);
-    player.setUsername(username)
-    this.players[id] = player;
-
-    if (id === this.myPlayerId) {
-      this.physics.add.collider(player, this.wallsLayer!);
+  
+    try {
+      const player = new Player(this, position.x, position.y, "adam", "Adam_idle_anim_7.png", id);
+      player.setData("username", username);
+      player.setUsername(username);
+  
+      this.players[id] = player; 
+  
+      if (id === this.myPlayerId) {
+        this.physics.add.collider(player, this.wallsLayer!);
+      }
+    } catch (err) {
+      console.error(`Failed to create player ${id}:`, err);
     }
   }
 

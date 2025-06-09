@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import createGame from "../game/game.ts";
 import { useParams } from "react-router-dom";
 
@@ -23,32 +23,45 @@ const GameComponent: React.FC = () => {
 
   const { officeCode } = useParams();
   const token = localStorage.getItem("accessToken") || "";
-  const username = getUsernameFromToken(token);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
 
+  const username = useMemo(() => getUsernameFromToken(token), [token]);
+
   useEffect(() => {
-    if (!containerRef.current || gameRef.current || !officeCode) {
-      console.warn("Game not initialized:", { officeCode });
-      return;
-    }
-
-    gameRef.current = createGame({ officeCode, token, username});
-
+    if (!containerRef.current || gameRef.current || !officeCode) return;
+  
+    gameRef.current = createGame({ officeCode, token, username });
+  
     const handleChatMessage = (e: Event) => {
       const customEvent = e as CustomEvent<ChatMessage>;
       setChatMessages((prev) => [...prev, customEvent.detail]);
     };
-
+  
     window.addEventListener("chatMessage", handleChatMessage);
-
+  
     return () => {
+      window.removeEventListener("chatMessage", handleChatMessage);
       gameRef.current?.destroy(true);
       gameRef.current = null;
-      window.removeEventListener("chatMessage", handleChatMessage);
     };
-  }, [officeCode, token]);
+  }, []);  
+
+  useEffect(() => {
+    const stopGameInputWhileTyping = (e: KeyboardEvent) => {
+      if (
+        document.activeElement &&
+        document.activeElement.tagName === "INPUT"
+      ) {
+        e.stopPropagation(); // ✅ Prevent Phaser from capturing keys like space
+      }
+    };
+  
+    window.addEventListener("keydown", stopGameInputWhileTyping, true);
+    return () => window.removeEventListener("keydown", stopGameInputWhileTyping, true);
+  }, []);
+  
 
   useEffect(() => {
     // Auto-scroll chat to bottom
@@ -57,16 +70,16 @@ const GameComponent: React.FC = () => {
 
   const sendChatMessage = () => {
     if (!chatInput.trim()) return;
-
+  
     const chatEvent = new CustomEvent("outgoingChatMessage", {
       detail: {
-        sender: username,
-        message: chatInput,
+        message: chatInput, // ✅ Just send message
       },
     });
-    window.dispatchEvent(chatEvent);
+    window.dispatchEvent(chatEvent); 
     setChatInput("");
   };
+  
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh" }}>
@@ -94,13 +107,14 @@ const GameComponent: React.FC = () => {
           style={{ flex: 1, overflowY: "auto", marginBottom: "10px" }}
         >
           {chatMessages.map((chat, idx) => (
-            <div key={idx}>
-              <strong style={{ color: chat.sender === username ? "#00d8ff" : "#ffa726" }}>
-                {chat.sender}:
-              </strong>{" "}
-              {chat.message}
-            </div>
-          ))}
+          <div key={idx}>
+            <strong style={{ color: chat.sender === username ? "#00d8ff" : "#ffa726" }}>
+              {chat.sender}:
+            </strong>{" "}
+            {typeof chat.message === "string" ? chat.message : JSON.stringify(chat.message)}
+          </div>
+        ))}
+
         </div>
 
         <div style={{ display: "flex" }}>
@@ -108,7 +122,11 @@ const GameComponent: React.FC = () => {
             type="text"
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendChatMessage()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                sendChatMessage();
+              }
+            }}
             placeholder="Type a message..."
             style={{
               flex: 1,
