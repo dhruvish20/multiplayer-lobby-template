@@ -5,7 +5,6 @@ A scalable real-time multiplayer **lobby system template** — built with **Reac
 This repo is intended as a **starter kit** for multiplayer developers.  
 You can fork and add chat, games, video, avatars, or anything interactive.
 
-> 🔧 Currently working on: In-game message system  
 > 🎯 Designed for extensibility and performance
 
 ---
@@ -27,7 +26,18 @@ You can fork and add chat, games, video, avatars, or anything interactive.
 - ✅ Battle-tested with 600 virtual users (see below)
 
 ---
+## 🖼️ Screenshots
 
+### 🧑‍💼 Virtual Office View  
+![Game View](./assests/demo_screenshot1.png)
+
+### 💬 In-Game Chat  
+![Chat Feature](./assests/demo_screenshot2.png)
+
+### 👥 Multiplayer + Messaging  
+![Player Interaction](./assests/demo_screenshot3.png)
+
+---
 ## 📊 Performance Benchmark
 
 Load tested with [Artillery](https://artillery.io) on a MacBook Air (M1, 8GB RAM).
